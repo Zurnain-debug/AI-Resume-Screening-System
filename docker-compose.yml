@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:5.0
+    container_name: resume-screening-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - resume-screening-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: resume-screening-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGODB_URI=mongodb://root:password@mongodb:27017/resume-screening
+      - JWT_SECRET=your_jwt_secret_key_here
+      - PYTHON_API_URL=http://ai-module:5001
+      - NODE_ENV=production
+    depends_on:
+      - mongodb
+    networks:
+      - resume-screening-network
+
+  ai-module:
+    build:
+      context: ./ai-module
+      dockerfile: Dockerfile
+    container_name: resume-screening-ai
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=production
+      - DEBUG=False
+    networks:
+      - resume-screening-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: resume-screening-frontend
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000/api
+    depends_on:
+      - backend
+    networks:
+      - resume-screening-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  resume-screening-network:
+    driver: bridge
