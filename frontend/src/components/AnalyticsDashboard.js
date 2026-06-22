@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Spin, message, Row, Col, Statistic, Pie } from 'antd';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { resultService } from '../services/apiService';
+import { resultService, getApiErrorMessage } from '../services/apiService';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -22,7 +22,9 @@ const AnalyticsDashboard = ({ jobId }) => {
       const response = await resultService.getAnalytics(jobId);
       setData(response.data);
     } catch (error) {
-      message.error('Failed to fetch analytics');
+      const errorMessage = getApiErrorMessage(error, 'Failed to fetch analytics');
+      message.error(errorMessage);
+      console.error('AnalyticsDashboard fetchAnalytics error:', error);
     } finally {
       setLoading(false);
     }

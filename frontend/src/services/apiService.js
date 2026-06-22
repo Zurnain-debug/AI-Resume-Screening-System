@@ -2,41 +2,55 @@ import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
+const axiosInstance = axios.create({
+  baseURL: API_URL,
+  timeout: 15000,
+  headers: {
+    Accept: 'application/json'
+  }
+});
+
+const getToken = () => localStorage.getItem('token');
+
+axiosInstance.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    delete config.headers.Authorization;
+  }
+  return config;
+});
+
+const getApiErrorMessage = (error, fallback = 'Request failed') => {
+  if (error?.response) {
+    const status = error.response.status;
+    const dataMessage = error.response.data?.error || error.response.data?.message || JSON.stringify(error.response.data);
+    return `${fallback} (${status}): ${dataMessage}`;
+  }
+
+  if (error?.request) {
+    return `${fallback}: no response received from server`;
+  }
+
+  return `${fallback}: ${error?.message || 'Unknown error'}`;
+};
+
 const authService = {
-  register: (userData) => axios.post(`${API_URL}/auth/register`, userData),
-  login: (credentials) => axios.post(`${API_URL}/auth/login`, credentials),
+  register: (userData) => axiosInstance.post('/auth/register', userData),
+  login: (credentials) => axiosInstance.post('/auth/login', credentials),
   logout: () => localStorage.removeItem('token'),
   setToken: (token) => localStorage.setItem('token', token),
-  getToken: () => localStorage.getItem('token'),
-  getProfile: () => {
-    const token = localStorage.getItem('token');
-    return axios.get(`${API_URL}/auth/profile`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-  }
+  getToken,
+  getProfile: () => axiosInstance.get('/auth/profile')
 };
 
 const jobService = {
-  createJob: (jobData) => {
-    const token = localStorage.getItem('token');
-    return axios.post(`${API_URL}/jobs`, jobData, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-  },
-  getJobs: () => axios.get(`${API_URL}/jobs`),
-  getJobById: (id) => axios.get(`${API_URL}/jobs/${id}`),
-  updateJob: (id, jobData) => {
-    const token = localStorage.getItem('token');
-    return axios.put(`${API_URL}/jobs/${id}`, jobData, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-  },
-  deleteJob: (id) => {
-    const token = localStorage.getItem('token');
-    return axios.delete(`${API_URL}/jobs/${id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-  }
+  createJob: (jobData) => axiosInstance.post('/jobs', jobData),
+  getJobs: () => axiosInstance.get('/jobs'),
+  getJobById: (id) => axiosInstance.get(`/jobs/${id}`),
+  updateJob: (id, jobData) => axiosInstance.put(`/jobs/${id}`, jobData),
+  deleteJob: (id) => axiosInstance.delete(`/jobs/${id}`)
 };
 
 const resumeService = {
@@ -44,64 +58,24 @@ const resumeService = {
     const formData = new FormData();
     formData.append('resume', resumeFile);
     formData.append('jobId', jobId);
-    
-    const token = localStorage.getItem('token');
-    return axios.post(`${API_URL}/resumes/upload`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${token}`
-      }
-    });
+    return axiosInstance.post('/resumes/upload', formData);
   },
-  processResume: (resumeId) => {
-    const token = localStorage.getItem('token');
-    return axios.post(`${API_URL}/resumes/process`, { resumeId }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-  },
-  getResumes: (jobId = null) => {
-    const token = localStorage.getItem('token');
-    const params = jobId ? { jobId } : {};
-    return axios.get(`${API_URL}/resumes`, {
-      params,
-      headers: { Authorization: `Bearer ${token}` }
-    });
-  },
-  getResumeById: (id) => {
-    const token = localStorage.getItem('token');
-    return axios.get(`${API_URL}/resumes/${id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-  }
+  processResume: (resumeId) => axiosInstance.post('/resumes/process', { resumeId }),
+  getResumes: (jobId = null) => axiosInstance.get('/resumes', { params: jobId ? { jobId } : {} }),
+  getResumeById: (id) => axiosInstance.get(`/resumes/${id}`)
 };
 
 const resultService = {
-  getResults: (jobId = null) => {
-    const token = localStorage.getItem('token');
-    const params = jobId ? { jobId } : {};
-    return axios.get(`${API_URL}/results`, {
-      params,
-      headers: { Authorization: `Bearer ${token}` }
-    });
-  },
-  getRanking: (jobId) => {
-    const token = localStorage.getItem('token');
-    return axios.get(`${API_URL}/results/job/${jobId}/ranking`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-  },
-  getAnalytics: (jobId) => {
-    const token = localStorage.getItem('token');
-    return axios.get(`${API_URL}/results/job/${jobId}/analytics`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-  },
-  getResultById: (id) => {
-    const token = localStorage.getItem('token');
-    return axios.get(`${API_URL}/results/${id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-  }
+  getResults: (jobId = null) => axiosInstance.get('/results', { params: jobId ? { jobId } : {} }),
+  getRanking: (jobId) => axiosInstance.get(`/results/job/${jobId}/ranking`),
+  getAnalytics: (jobId) => axiosInstance.get(`/results/job/${jobId}/analytics`),
+  getResultById: (id) => axiosInstance.get(`/results/${id}`),
+  updateResult: (id, resultData) => axiosInstance.put(`/results/${id}`, resultData)
 };
 
-export { authService, jobService, resumeService, resultService };
+const sampleResumeService = {
+  listSamples: () => axiosInstance.get('/samples'),
+  getSample: (type) => axiosInstance.get(`/samples/${type}`)
+};
+
+export { authService, jobService, resumeService, resultService, sampleResumeService, getApiErrorMessage };

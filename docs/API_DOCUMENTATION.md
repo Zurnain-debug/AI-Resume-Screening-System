@@ -289,6 +289,14 @@ GET /results?jobId=63f5e5678901234abcd
     "similarityScore": 0.87,
     "matchedSkills": [{"skill": "Python", "confidence": 0.95}],
     "missingSkills": ["Kubernetes"],
+    "matchBreakdown": {
+      "content_similarity": 87,
+      "skill_match": 85,
+      "experience_match": 92
+    },
+    "candidateStatus": "shortlisted",
+    "adminRating": 4,
+    "adminNotes": "Strong technical skills, good communication",
     "ranking": 1,
     "candidateId": {
       "_id": "63f5d9012345678abcd",
@@ -298,6 +306,436 @@ GET /results?jobId=63f5e5678901234abcd
   }
 ]
 ```
+
+#### Get Ranking for Job
+```http
+GET /results/job/:jobId/ranking
+Authorization: Bearer <token>
+```
+
+**Response** (200 OK):
+```json
+{
+  "jobId": "63f5e5678901234abcd",
+  "jobTitle": "Senior Python Developer",
+  "totalApplicants": 25,
+  "averageScore": 72,
+  "ranking": [
+    {
+      "_id": "63f5f5678901234abcd",
+      "percentageMatch": 92,
+      "candidateId": {
+        "name": "John Doe",
+        "email": "john@example.com"
+      },
+      "candidateStatus": "shortlisted",
+      "matchedSkills": ["Python", "Django", "PostgreSQL"]
+    },
+    {
+      "_id": "63f5f5678901234efgh",
+      "percentageMatch": 85,
+      "candidateId": {
+        "name": "Jane Smith",
+        "email": "jane@example.com"
+      },
+      "candidateStatus": "reviewing",
+      "matchedSkills": ["Python", "Django"]
+    }
+  ]
+}
+```
+
+#### Get Analytics for Job
+```http
+GET /results/job/:jobId/analytics
+Authorization: Bearer <token>
+```
+
+**Response** (200 OK):
+```json
+{
+  "jobId": "63f5e5678901234abcd",
+  "totalApplicants": 25,
+  "averageScore": 72.5,
+  "scoreDistribution": {
+    "excellent": 5,
+    "good": 8,
+    "fair": 7,
+    "poor": 5
+  },
+  "shortlistedCount": 8,
+  "rejectedCount": 5,
+  "topSkills": [
+    {"skill": "Python", "matchCount": 20},
+    {"skill": "Django", "matchCount": 18}
+  ],
+  "missingSkills": [
+    {"skill": "Kubernetes", "missingCount": 15},
+    {"skill": "Docker", "missingCount": 12}
+  ]
+}
+```
+
+#### Get Specific Result Details
+```http
+GET /results/:resultId
+Authorization: Bearer <token>
+```
+
+**Response** (200 OK):
+```json
+{
+  "_id": "63f5f5678901234abcd",
+  "resumeId": "63f5f1234567890abcd",
+  "jobId": "63f5e5678901234abcd",
+  "candidateId": {
+    "_id": "63f5d9012345678abcd",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "phone": "1234567890"
+  },
+  "percentageMatch": 87,
+  "similarityScore": 0.87,
+  "matchBreakdown": {
+    "content_similarity": 87,
+    "skill_match": 85,
+    "experience_match": 92
+  },
+  "matchedSkills": [
+    {"skill": "Python", "confidence": 0.95},
+    {"skill": "Django", "confidence": 0.92},
+    {"skill": "PostgreSQL", "confidence": 0.88}
+  ],
+  "missingSkills": ["Kubernetes", "Terraform"],
+  "experienceYears": 7,
+  "recommendedAction": "Strong technical match. Consider for interview.",
+  "candidateStatus": "shortlisted",
+  "adminRating": 4,
+  "adminNotes": "Excellent Python skills, good Django experience",
+  "feedback": "87% match score with strong technical background",
+  "analyzedAt": "2023-02-23T11:05:00Z",
+  "updatedAt": "2023-02-23T12:30:00Z"
+}
+```
+
+#### Update Result (HR Only)
+```http
+PUT /results/:resultId
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "adminNotes": "Strong candidate, schedule interview.",
+  "adminRating": 5,
+  "candidateStatus": "interview_scheduled"
+}
+```
+
+**Response** (200 OK):
+```json
+{
+  "_id": "63f5f5678901234abcd",
+  "adminNotes": "Strong candidate, schedule interview.",
+  "adminRating": 5,
+  "candidateStatus": "interview_scheduled",
+  "updatedAt": "2023-02-23T12:45:00Z"
+}
+```
+
+---
+
+### 5. Sample Resumes
+
+#### List Sample Resumes
+```http
+GET /samples
+```
+
+**Response** (200 OK):
+```json
+{
+  "samples": [
+    {"id": "resume1", "name": "John Doe", "role": "Software Engineer"},
+    {"id": "resume2", "name": "Jane Smith", "role": "Product Manager"}
+  ]
+}
+```
+
+#### Get Sample Resume
+```http
+GET /samples/:type
+```
+
+**Response** (200 OK):
+```json
+{
+  "resume": {
+    "id": "resume1",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "phone": "123-456-7890",
+    "content": "..."
+  }
+}
+```
+
+#### Update Result (Admin Only)
+```http
+PUT /results/:resultId
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "candidateStatus": "interview_scheduled",
+  "adminRating": 5,
+  "adminNotes": "Scheduled for technical interview on Feb 25"
+}
+```
+
+**Response** (200 OK):
+```json
+{
+  "message": "Result updated successfully",
+  "result": {
+    "_id": "63f5f5678901234abcd",
+    "percentageMatch": 87,
+    "candidateStatus": "interview_scheduled",
+    "adminRating": 5,
+    "adminNotes": "Scheduled for technical interview on Feb 25",
+    "updatedAt": "2023-02-23T12:35:00Z"
+  }
+}
+```
+
+---
+
+### 5. Sample Resumes (NEW)
+
+#### List All Sample Resumes
+```http
+GET /samples
+```
+
+No authentication required. Returns list of available sample resumes.
+
+**Response** (200 OK):
+```json
+{
+  "samples": [
+    {
+      "id": "frontend_developer",
+      "name": "Priya Sharma",
+      "role": "Senior Frontend Developer",
+      "email": "priya.sharma@example.com",
+      "phone": "+91-9876543210"
+    },
+    {
+      "id": "data_scientist",
+      "name": "Arjun Patel",
+      "role": "Data Scientist",
+      "email": "arjun.patel@example.com",
+      "phone": "+91-9876543211"
+    },
+    {
+      "id": "hr_specialist",
+      "name": "Nisha Gupta",
+      "role": "HR Manager",
+      "email": "nisha.gupta@example.com",
+      "phone": "+91-9876543212"
+    }
+  ]
+}
+```
+
+#### Get Specific Sample Resume
+```http
+GET /samples/:type
+```
+
+Where `:type` can be: `frontend_developer`, `data_scientist`, or `hr_specialist`
+
+**Response** (200 OK):
+```json
+{
+  "resume": {
+    "id": "frontend_developer",
+    "name": "Priya Sharma",
+    "email": "priya.sharma@example.com",
+    "phone": "+91-9876543210",
+    "content": "PRIYA SHARMA\n\nSenior Frontend Developer\npriya.sharma@example.com | +91-9876543210 | New Delhi, India\n\nPROFESSIONAL SUMMARY\nExperienced Senior Frontend Developer with 5+ years of expertise in React, TypeScript, and modern web technologies...\n\n[Full resume content with education, experience, skills, etc.]"
+  }
+}
+```
+
+---
+
+## Error Responses
+
+All error responses follow this format:
+
+```json
+{
+  "message": "Error description",
+  "error": "ErrorType",
+  "statusCode": 400
+}
+```
+
+### Common Error Codes
+
+| Code | Message | Cause |
+|------|---------|-------|
+| 400 | Bad Request | Invalid input or malformed JSON |
+| 401 | Unauthorized | Missing or invalid JWT token |
+| 403 | Forbidden | User doesn't have permission |
+| 404 | Not Found | Resource doesn't exist |
+| 409 | Conflict | Duplicate entry (e.g., email already registered) |
+| 413 | Payload Too Large | File size exceeds limit (>5MB) |
+| 500 | Internal Server Error | Server error (check logs) |
+
+### Example Error Response
+```json
+{
+  "message": "Invalid file format. Only PDF, DOCX, and TXT are allowed",
+  "error": "ValidationError",
+  "statusCode": 400
+}
+```
+
+---
+
+## Rate Limiting
+
+- **Standard Users**: 100 requests per 15 minutes
+- **Resume Upload**: 10 uploads per hour
+- **AI Analysis**: 5 concurrent analyses
+
+---
+
+## Pagination
+
+For endpoints returning lists, use query parameters:
+
+```http
+GET /jobs?page=1&limit=10
+GET /resumes?page=2&limit=20
+```
+
+Response includes metadata:
+```json
+{
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 45,
+    "pages": 5
+  }
+}
+```
+
+---
+
+## WebSocket Events (Real-time Updates)
+
+Connect to WebSocket for real-time resume processing updates:
+
+```javascript
+const socket = io('http://localhost:5000');
+socket.on('resume:processing', (data) => {
+  console.log('Resume processing:', data);
+});
+socket.on('resume:completed', (data) => {
+  console.log('Resume analysis complete:', data);
+});
+```
+
+---
+
+## Authentication Flow
+
+1. **Register User**
+   ```
+   POST /auth/register → Receive token
+   ```
+
+2. **Login**
+   ```
+   POST /auth/login → Receive token
+   ```
+
+3. **Use Token in Requests**
+   ```
+   Authorization: Bearer <token>
+   ```
+
+4. **Token Expires**
+   - JWT tokens expire after 24 hours
+   - Use refresh token to get new token
+   ```
+   POST /auth/refresh
+   ```
+
+---
+
+## Example Workflow
+
+### Complete Resume Screening Workflow
+
+```bash
+# 1. Register as HR
+curl -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "HR Manager",
+    "email": "hr@company.com",
+    "password": "secure123",
+    "role": "HR",
+    "company": "Tech Corp"
+  }'
+
+# 2. Login and save token
+TOKEN=$(curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "hr@company.com",
+    "password": "secure123"
+  }' | jq -r '.token')
+
+# 3. Create job
+curl -X POST http://localhost:5000/api/jobs \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Senior Developer",
+    "requiredSkills": ["React", "Node.js"],
+    "experienceLevel": "Senior"
+  }'
+
+# 4. Upload resume
+curl -X POST http://localhost:5000/api/resumes/upload \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "resume=@resume.pdf" \
+  -F "jobId=<job-id>"
+
+# 5. Get results
+curl http://localhost:5000/api/results \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+---
+
+## API Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | Feb 2023 | Initial release |
+| 1.1 | Feb 2023 | Added sample resumes endpoint |
+| 1.2 | Feb 2023 | Enhanced results with score breakdown |
+
+---
+
+For more information, see [README.md](../README.md) and [QUICK_START.md](../QUICK_START.md)
 
 #### Get Candidate Ranking for Job
 ```http

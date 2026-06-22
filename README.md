@@ -130,6 +130,14 @@ The AI Resume Screening System is a modern, intelligent recruitment platform des
 
 The frontend will be available at `http://localhost:3000`
 
+### One-Click Development Startup
+If you want to start all three services together on Windows, double-click the `start-dev.bat` file in the project root. It will:
+- create missing `.env` files from examples if needed
+- install Node dependencies only when required
+- create and install Python dependencies into `ai-module/venv`
+- launch backend, AI module, and frontend in separate command windows
+- open the frontend automatically when ready
+
 ## API Endpoints
 
 ### Authentication
@@ -155,6 +163,7 @@ The frontend will be available at `http://localhost:3000`
 - `GET /api/results/job/:jobId/ranking` - Get candidate ranking for job
 - `GET /api/results/job/:jobId/analytics` - Get analytics for job
 - `GET /api/results/:id` - Get specific result details
+- `PUT /api/results/:id` - Update result details (HR only)
 
 ### AI Module
 - `GET /health` - Health check

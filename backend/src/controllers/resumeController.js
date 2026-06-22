@@ -5,6 +5,22 @@ const { extractText } = require('../middleware/textExtractor');
 const axios = require('axios');
 const path = require('path');
 
+const mapExperienceLevelToYears = (experienceLevel) => {
+  if (!experienceLevel) return 0;
+  const value = String(experienceLevel).toLowerCase();
+  switch (value) {
+    case 'entry':
+      return 1;
+    case 'mid':
+      return 3;
+    case 'senior':
+      return 5;
+    default:
+      const numeric = Number(experienceLevel);
+      return Number.isFinite(numeric) ? numeric : 0;
+  }
+};
+
 const uploadResume = async (req, res) => {
   try {
     const { jobId } = req.body;
@@ -24,18 +40,31 @@ const uploadResume = async (req, res) => {
 
     const fileType = path.extname(req.file.originalname).substring(1).toUpperCase();
 
+    // Extract text immediately
+    const extractedText = await extractText(req.file.path, fileType);
+
     const resume = await Resume.create({
       candidateId: req.user.id,
       jobId,
       filePath: req.file.path,
       fileName: req.file.originalname,
       fileType: fileType,
-      status: 'Uploaded'
+      extractedText: extractedText,
+      status: 'Processing'
+    });
+
+    // Send to AI module for analysis asynchronously
+    processResumeAsync(resume._id, extractedText, job).catch(err => {
+      console.error('Background processing error:', err.message);
     });
 
     res.status(201).json({
-      message: 'Resume uploaded successfully',
-      resume
+      message: 'Resume uploaded and processing initiated',
+      resume: {
+        _id: resume._id,
+        fileName: resume.fileName,
+        status: resume.status
+      }
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -51,9 +80,14 @@ const processResume = async (req, res) => {
       return res.status(404).json({ error: 'Resume not found' });
     }
 
-    // Update status to processing
-    resume.status = 'Processing';
-    await resume.save();
+    if (resume.status === 'Processed') {
+      // Already processed, return existing result
+      const result = await Result.findOne({ resumeId });
+      return res.json({
+        message: 'Resume already processed',
+        result
+      });
+    }
 
     // Extract text from resume
     const extractedText = await extractText(resume.filePath, resume.fileType);
@@ -67,12 +101,16 @@ const processResume = async (req, res) => {
       const response = await axios.post(process.env.PYTHON_API_URL + '/analyze', {
         resumeText: extractedText,
         jobDescription: job.description,
-        requiredSkills: job.requiredSkills
+        requiredSkills: job.requiredSkills,
+        requiredExperience: mapExperienceLevelToYears(job.experienceLevel)
       });
 
-      const { similarityScore, matchedSkills, missingSkills, percentageMatch } = response.data;
+      const {
+        similarityScore, matchedSkills, missingSkills, percentageMatch,
+        experienceYears, recommendedAction, matchBreakdown
+      } = response.data;
 
-      // Create result
+      // Create result with enhanced data
       const result = await Result.create({
         resumeId,
         jobId: resume.jobId,
@@ -81,7 +119,9 @@ const processResume = async (req, res) => {
         percentageMatch,
         matchedSkills,
         missingSkills,
-        feedback: `Match Score: ${percentageMatch}%. Key skills matched: ${matchedSkills.map(s => s.skill).join(', ')}`
+        experienceYears,
+        feedback: `Match Score: ${percentageMatch}%. ${recommendedAction}. Skills: ${matchedSkills.map(s => s.skill).join(', ')}`,
+        matchBreakdown
       });
 
       resume.status = 'Processed';
@@ -99,6 +139,54 @@ const processResume = async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+// Helper function to process resume in background
+const processResumeAsync = async (resumeId, extractedText, job) => {
+  try {
+    const resume = await Resume.findById(resumeId);
+    if (!resume) return;
+
+    const response = await axios.post(process.env.PYTHON_API_URL + '/analyze', {
+      resumeText: extractedText,
+      jobDescription: job.description,
+      requiredSkills: job.requiredSkills,
+      requiredExperience: mapExperienceLevelToYears(job.experienceLevel)
+    });
+
+    const {
+      similarityScore, matchedSkills, missingSkills, percentageMatch,
+      experienceYears, recommendedAction, matchBreakdown
+    } = response.data;
+
+    // Create result
+    await Result.create({
+      resumeId,
+      jobId: job._id,
+      candidateId: resume.candidateId,
+      similarityScore,
+      percentageMatch,
+      matchedSkills,
+      missingSkills,
+      experienceYears,
+      feedback: `Match Score: ${percentageMatch}%. ${recommendedAction}. Skills: ${matchedSkills.map(s => s.skill).join(', ')}`,
+      matchBreakdown
+    });
+
+    // Update resume status
+    resume.status = 'Processed';
+    resume.processedAt = new Date();
+    await resume.save();
+
+    console.log(`Resume ${resumeId} processed successfully`);
+  } catch (error) {
+    console.error(`Error processing resume ${resumeId}:`, error.message);
+    const resume = await Resume.findById(resumeId);
+    if (resume) {
+      resume.status = 'Failed';
+      await resume.save();
+    }
   }
 };
 

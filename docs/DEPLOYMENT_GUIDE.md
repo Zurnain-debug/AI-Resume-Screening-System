@@ -1,12 +1,74 @@
-# Deployment Guide
+# Deployment Guide - AI Resume Screening System
 
-## Prerequisites
+Complete guide for deploying the AI Resume Screening System to production using Docker and cloud services.
+
+## 📋 Table of Contents
+
+1. [Pre-Deployment Checklist](#pre-deployment-checklist)
+2. [Environment Setup](#environment-setup)
+3. [Docker Deployment](#docker-deployment)
+4. [Cloud Deployment Options](#cloud-deployment-options)
+5. [Database Setup](#database-setup)
+6. [Security Considerations](#security-considerations)
+7. [Monitoring & Logs](#monitoring--logs)
+8. [Troubleshooting](#troubleshooting)
+
+---
+
+## ✅ Pre-Deployment Checklist
+
+Before deploying, ensure:
+
+- [ ] All tests pass locally
+- [ ] Environment variables documented
+- [ ] Database backups in place
+- [ ] SSL certificates ready
+- [ ] API rate limiting configured
+- [ ] Error monitoring setup
+
+## 📦 Prerequisites
 
 - Docker and Docker Compose installed
-- Node.js and Python installed locally (for development)
+- Node.js 14+ and Python 3.8+ installed locally (for development)
 - MongoDB instance (local or cloud)
+- Git repository access
 
-## Local Development Setup
+## 🌍 Environment Setup
+
+### Create Environment Files
+
+**Backend (.env)**
+```bash
+PORT=5000
+NODE_ENV=production
+APP_URL=https://yourdomain.com
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/dbname?retryWrites=true&w=majority
+DB_NAME=resume_screening
+JWT_SECRET=your-super-secret-jwt-key-min-32-chars
+JWT_EXPIRE=24h
+REFRESH_TOKEN_SECRET=another-secret-min-32-chars
+UPLOAD_DIR=/uploads
+MAX_FILE_SIZE=10485760
+AI_SERVICE_URL=http://ai-module:5001
+AI_SERVICE_TIMEOUT=30000
+```
+
+**Frontend (.env)**
+```bash
+REACT_APP_API_URL=https://api.yourdomain.com/api
+REACT_APP_ENVIRONMENT=production
+```
+
+**AI Module (.env)**
+```bash
+PORT=5001
+FLASK_ENV=production
+DEBUG=False
+WORKERS=4
+THREADS=8
+```
+
+## 🏠 Local Development Setup
 
 ### Step 1: Backend Setup
 

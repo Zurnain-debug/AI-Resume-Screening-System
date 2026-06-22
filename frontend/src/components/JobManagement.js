@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Modal, Form, Input, Tag, message } from 'antd';
+import { Table, Button, Space, Modal, Form, Input, Tag, message, Select } from 'antd';
 import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { jobService } from '../services/apiService';
 
@@ -20,7 +20,8 @@ const JobManagement = () => {
       const response = await jobService.getJobs();
       setJobs(response.data);
     } catch (error) {
-      message.error('Failed to fetch jobs');
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to fetch jobs';
+      message.error(`Failed to fetch jobs: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -39,19 +40,17 @@ const JobManagement = () => {
   };
 
   const handleDeleteJob = async (id) => {
-    Modal.confirm({
-      title: 'Delete Job',
-      content: 'Are you sure you want to delete this job?',
-      onOk: async () => {
-        try {
-          await jobService.deleteJob(id);
-          message.success('Job deleted successfully');
-          fetchJobs();
-        } catch (error) {
-          message.error('Failed to delete job');
-        }
-      }
-    });
+    const confirmed = window.confirm('Are you sure you want to delete this job?');
+    if (!confirmed) return;
+
+    try {
+      await jobService.deleteJob(id);
+      message.success('Job deleted successfully');
+      fetchJobs();
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to delete job';
+      message.error(`Failed to delete job: ${errorMessage}`);
+    }
   };
 
   const handleSubmit = async (values) => {
@@ -66,7 +65,8 @@ const JobManagement = () => {
       setModalVisible(false);
       fetchJobs();
     } catch (error) {
-      message.error('Failed to save job');
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to save job';
+      message.error(`Failed to save job: ${errorMessage}`);
     }
   };
 
@@ -101,10 +101,10 @@ const JobManagement = () => {
       key: 'actions',
       render: (_, record) => (
         <Space>
-          <Button icon={<EditOutlined />} onClick={() => handleEditJob(record)}>
+          <Button data-testid={`edit-${record._id}`} icon={<EditOutlined />} onClick={() => handleEditJob(record)}>
             Edit
           </Button>
-          <Button danger icon={<DeleteOutlined />} onClick={() => handleDeleteJob(record._id)}>
+          <Button data-testid={`delete-${record._id}`} danger icon={<DeleteOutlined />} onClick={() => handleDeleteJob(record._id)}>
             Delete
           </Button>
         </Space>
@@ -153,8 +153,14 @@ const JobManagement = () => {
           <Form.Item
             name="experienceLevel"
             label="Experience Level"
+            initialValue="Mid"
+            rules={[{ required: true, message: 'Please select experience level' }]}
           >
-            <Input />
+            <Select placeholder="Select experience level">
+              <Select.Option value="Entry">Entry Level</Select.Option>
+              <Select.Option value="Mid">Mid Level</Select.Option>
+              <Select.Option value="Senior">Senior Level</Select.Option>
+            </Select>
           </Form.Item>
         </Form>
       </Modal>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Layout, Menu, Button, Card, Table, Tag, message } from 'antd';
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import ResumeUpload from '../components/ResumeUpload';
-import { jobService, resumeService } from '../services/apiService';
+import { jobService, resumeService, getApiErrorMessage } from '../services/apiService';
 
 const { Sider, Content } = Layout;
 
@@ -27,7 +27,9 @@ const CandidateDashboard = () => {
       const response = await jobService.getJobs();
       setJobs(response.data.filter(job => job.status === 'Open'));
     } catch (error) {
-      message.error('Failed to fetch jobs');
+      const errorMessage = getApiErrorMessage(error, 'Failed to fetch jobs');
+      message.error(errorMessage);
+      console.error('CandidateDashboard fetchJobs error:', error);
     } finally {
       setLoading(false);
     }
@@ -39,7 +41,9 @@ const CandidateDashboard = () => {
       const response = await resumeService.getResumes();
       setResumes(response.data);
     } catch (error) {
-      message.error('Failed to fetch applications');
+      const errorMessage = getApiErrorMessage(error, 'Failed to fetch applications');
+      message.error(errorMessage);
+      console.error('CandidateDashboard fetchResumes error:', error);
     } finally {
       setLoading(false);
     }

@@ -4,7 +4,7 @@ import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import JobManagement from '../components/JobManagement';
 import CandidateRanking from '../components/CandidateRanking';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
-import { jobService, resultService } from '../services/apiService';
+import { jobService, resultService, getApiErrorMessage } from '../services/apiService';
 
 const { Sider, Content } = Layout;
 
@@ -25,7 +25,9 @@ const HRDashboard = () => {
       const response = await jobService.getJobs();
       setJobs(response.data);
     } catch (error) {
-      message.error('Failed to fetch jobs');
+      const errorMessage = getApiErrorMessage(error, 'Failed to fetch jobs');
+      message.error(errorMessage);
+      console.error('HRDashboard fetchJobs error:', error);
     } finally {
       setJobsLoading(false);
     }

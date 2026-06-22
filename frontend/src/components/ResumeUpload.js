@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, Button, message, Spin, Select, Card } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
-import { resumeService, jobService } from '../services/apiService';
+import { resumeService, jobService, getApiErrorMessage } from '../services/apiService';
 
 const ResumeUpload = () => {
   const [loading, setLoading] = useState(false);
@@ -20,7 +20,9 @@ const ResumeUpload = () => {
       const response = await jobService.getJobs();
       setJobs(response.data.filter(job => job.status === 'Open'));
     } catch (error) {
-      message.error('Failed to fetch jobs');
+      const errorMessage = getApiErrorMessage(error, 'Failed to fetch jobs');
+      message.error(errorMessage);
+      console.error('ResumeUpload fetchJobs error:', error);
     } finally {
       setJobsLoading(false);
     }
@@ -39,7 +41,9 @@ const ResumeUpload = () => {
       setFiles([...files, response.data.resume]);
       return false;
     } catch (error) {
-      message.error(error.response?.data?.error || 'Upload failed');
+      const errorMessage = getApiErrorMessage(error, 'Failed to upload resume');
+      message.error(errorMessage);
+      console.error('ResumeUpload upload error:', error);
       return false;
     } finally {
       setLoading(false);

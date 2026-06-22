@@ -33,16 +33,42 @@ const ResultSchema = new mongoose.Schema({
     confidence: Number
   }],
   missingSkills: [String],
+  experienceYears: {
+    type: Number,
+    default: 0
+  },
   ranking: {
     type: Number
   },
   feedback: {
     type: String
   },
+  matchBreakdown: {
+    content_similarity: Number,
+    skill_match: Number,
+    experience_match: Number
+  },
+  recommendedAction: String,
+  adminNotes: String,
+  adminRating: {
+    type: Number,
+    min: 1,
+    max: 5
+  },
+  candidateStatus: {
+    type: String,
+    enum: ['new', 'reviewing', 'shortlisted', 'rejected', 'interview_scheduled', 'offered', 'hired'],
+    default: 'new'
+  },
   analyzedAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
     type: Date,
     default: Date.now
   }
 });
 
 module.exports = mongoose.model('Result', ResultSchema);
+

@@ -127,4 +127,28 @@ const getResultById = async (req, res) => {
   }
 };
 
-module.exports = { getResults, getRanking, getAnalytics, getResultById };
+const updateResult = async (req, res) => {
+  try {
+    const result = await Result.findById(req.params.id);
+
+    if (!result) {
+      return res.status(404).json({ error: 'Result not found' });
+    }
+
+    const allowedFields = ['adminNotes', 'adminRating', 'candidateStatus', 'feedback', 'recommendedAction'];
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        result[field] = req.body[field];
+      }
+    });
+
+    result.updatedAt = Date.now();
+    await result.save();
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { getResults, getRanking, getAnalytics, getResultById, updateResult };

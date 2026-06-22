@@ -8,10 +8,20 @@ const createJob = async (req, res) => {
       return res.status(400).json({ error: 'Title and description are required' });
     }
 
+    // Process requiredSkills - if it's a string, split by comma
+    let skillsArray = [];
+    if (requiredSkills) {
+      if (Array.isArray(requiredSkills)) {
+        skillsArray = requiredSkills;
+      } else if (typeof requiredSkills === 'string') {
+        skillsArray = requiredSkills.split(',').map(skill => skill.trim()).filter(skill => skill);
+      }
+    }
+
     const job = await Job.create({
       title,
       description,
-      requiredSkills: requiredSkills || [],
+      requiredSkills: skillsArray,
       experienceLevel: experienceLevel || 'Mid',
       salary: salary || {},
       department,
@@ -66,7 +76,13 @@ const updateJob = async (req, res) => {
       return res.status(403).json({ error: 'Not authorized to update this job' });
     }
 
-    job = await Job.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    // Process requiredSkills if provided
+    const updateData = { ...req.body };
+    if (updateData.requiredSkills && typeof updateData.requiredSkills === 'string') {
+      updateData.requiredSkills = updateData.requiredSkills.split(',').map(skill => skill.trim()).filter(skill => skill);
+    }
+
+    job = await Job.findByIdAndUpdate(req.params.id, updateData, { new: true });
     res.json({
       message: 'Job updated successfully',
       job

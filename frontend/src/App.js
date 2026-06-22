@@ -3,10 +3,15 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Layout, Spin, message } from 'antd';
 import { authService } from './services/apiService';
 import NavigationBar from './components/NavigationBar';
+import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import HRDashboard from './pages/HRDashboard';
 import CandidateDashboard from './pages/CandidateDashboard';
+import JobManagementPage from './pages/JobManagementPage';
+import CandidateRankingPage from './pages/CandidateRankingPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import SampleResumePage from './pages/SampleResumePage';
 import './App.css';
 
 const { Content } = Layout;
@@ -48,14 +53,14 @@ function App() {
   };
 
   if (loading) {
-    return <Spin style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }} />;
+    return <Spin className="app-loader" />;
   }
 
   return (
     <Router>
-      <Layout>
-        {isAuthenticated && <NavigationBar user={user} onLogout={handleLogout} />}
-        <Content>
+      <Layout className="app-shell">
+        <NavigationBar user={user} onLogout={handleLogout} />
+        <Content className="app-content">
           <Routes>
             <Route path="/login" element={<LoginPage onSuccess={handleLogin} />} />
             <Route path="/register" element={<RegisterPage onSuccess={handleLogin} />} />
@@ -68,12 +73,28 @@ function App() {
               element={isAuthenticated && user?.role === 'Candidate' ? <CandidateDashboard /> : <Navigate to="/login" />}
             />
             <Route
+              path="/job-management"
+              element={isAuthenticated && user?.role === 'HR' ? <JobManagementPage /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/candidate-ranking"
+              element={isAuthenticated && user?.role === 'HR' ? <CandidateRankingPage /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/analytics"
+              element={isAuthenticated && user?.role === 'HR' ? <AnalyticsPage /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/sample-resumes"
+              element={<SampleResumePage />}
+            />
+            <Route
               path="/"
               element={
                 isAuthenticated ? (
                   user?.role === 'HR' ? <Navigate to="/hr-dashboard" /> : <Navigate to="/candidate-dashboard" />
                 ) : (
-                  <Navigate to="/login" />
+                  <HomePage />
                 )
               }
             />

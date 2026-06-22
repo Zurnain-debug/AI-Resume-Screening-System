@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Tag, Button, Space, Card, Spin, message } from 'antd';
-import { resultService } from '../services/apiService';
+import { resultService, getApiErrorMessage } from '../services/apiService';
 
 const CandidateRanking = ({ jobId }) => {
   const [data, setData] = useState(null);
@@ -18,7 +18,9 @@ const CandidateRanking = ({ jobId }) => {
       const response = await resultService.getRanking(jobId);
       setData(response.data);
     } catch (error) {
-      message.error('Failed to fetch ranking');
+      const errorMessage = getApiErrorMessage(error, 'Failed to fetch ranking');
+      message.error(errorMessage);
+      console.error('CandidateRanking fetchRanking error:', error);
     } finally {
       setLoading(false);
     }
